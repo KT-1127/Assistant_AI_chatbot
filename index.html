@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アシスタントAIチャットボット | KT-Tech-Lab</title>
+<link rel="icon" href="chatbot-images/favicon.png" type="image/png">
+<style>
+  :root {
+    --paper: #F3F5FB;
+    --card:  #FFFFFF;
+    --ink:   #16213D;
+    --soft:  #5A6485;
+    --line:  #DEE4F2;
+    --brand:      #4F46E5;
+    --brand-deep: #3730A3;
+    --brand-tint: #EEF2FF;
+    --green:      #10B981;
+    --green-tint: #D1FAE5;
+    --orange:     #F59E0B;
+    --orange-tint:#FEF3C7;
+    --red:        #EF4444;
+    --red-tint:   #FEE2E2;
+    --violet:     #7C3AED;
+    --violet-tint:#EDE9FE;
+    --sky:        #0EA5E9;
+    --sky-tint:   #E0F2FE;
+    --font:   "Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    --shadow: 0 2px 8px rgba(22,33,61,.07), 0 16px 40px rgba(22,33,61,.10);
+    --radius: 20px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--font); line-height: 1.75; -webkit-font-smoothing: antialiased; }
+
+  /* ── メイン ── */
+  main {
+    max-width: 860px;
+    margin: 0 auto 60px;
+    padding: 0 16px;
+  }
+
+  /* ── セクション見出し ── */
+  .section-label {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--soft);
+    text-transform: uppercase;
+    margin: 48px 0 18px 4px;
+  }
+  .section-title {
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: -.02em;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .section-desc {
+    font-size: .88rem;
+    color: var(--soft);
+    margin-bottom: 22px;
+    line-height: 1.7;
+  }
+
+  /* ── 機能詳細ブロック（縦並び） ── */
+  .feature-block {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1.5px solid var(--line);
+    overflow: hidden;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .feature-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent, var(--brand));
+  }
+  .feature-block-head {
+    padding: 28px 28px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .fb-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .fb-meta { flex: 1; }
+  .fb-number {
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--accent, var(--brand));
+    margin-bottom: 3px;
+  }
+  .fb-title {
+    font-size: 1.18rem; font-weight: 900;
+    letter-spacing: -.02em; line-height: 1.25;
+    margin-bottom: 4px;
+  }
+  .fb-tag {
+    display: inline-block;
+    font-size: .7rem; font-weight: 700;
+    padding: 2px 10px; border-radius: 999px;
+  }
+
+  /* スクショ画像 — 通常サイズ */
+  .fb-img {
+    margin: 20px 28px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    line-height: 0;
+  }
+  .fb-img img { width: 100%; display: block; }
+  .fb-img .img-ph {
+    padding: 28px 16px;
+    text-align: center;
+    font-size: 11.5px; color: var(--soft); line-height: 1.7;
+  }
+  .fb-img .img-ph span { display: block; font-size: 28px; margin-bottom: 8px; }
+
+  /* スクショ画像 — 小サイズ（画面の雰囲気が伝わる程度） */
+  .fb-img-sm {
+    margin: 20px 28px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    line-height: 0;
+    max-width: 460px;
+  }
+  .fb-img-sm img { width: 100%; display: block; }
+
+  /* スクショ画像 — メインビジュアルとして大きく扱う */
+  .fb-img-hero {
+    margin: 20px 28px 0;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    line-height: 0;
+    box-shadow: 0 4px 24px rgba(22,33,61,.10);
+  }
+  .fb-img-hero img { width: 100%; display: block; }
+
+  /* 説明テキスト */
+  .fb-desc {
+    padding: 18px 28px 0;
+    font-size: .88rem; color: var(--soft); line-height: 1.85;
+  }
+
+  /* サブ機能ポイントリスト */
+  .fb-points {
+    margin: 16px 28px 0;
+    display: flex; flex-direction: column; gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden;
+  }
+  .fb-point {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: .855rem; line-height: 1.65;
+  }
+  .fb-point:last-child { border-bottom: none; }
+  .fb-point .pt-icon { flex-shrink: 0; font-size: 16px; margin-top: 1px; }
+  .fb-point .pt-body { flex: 1; }
+  .fb-point .pt-body strong {
+    display: block; font-size: .87rem; font-weight: 800;
+    color: var(--ink); margin-bottom: 1px;
+  }
+  .fb-point .pt-body span { color: var(--soft); }
+
+  /* サブスクショ（複数枚並べる場合） */
+  .fb-sub-imgs {
+    margin: 16px 28px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .fb-sub-img {
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .fb-sub-img img { width: 100%; display: block; }
+  .fb-sub-img .sub-ph {
+    padding: 16px 10px; text-align: center;
+    font-size: 10.5px; color: var(--soft); line-height: 1.6;
+  }
+  .fb-sub-img .sub-ph span { display: block; font-size: 20px; margin-bottom: 5px; }
+  .fb-sub-label {
+    padding: 8px 12px;
+    font-size: 11px; font-weight: 700; color: var(--soft);
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+    text-align: center;
+  }
+
+  .feature-block-foot { padding: 20px 28px 28px; }
+
+  /* ── 体験デモ ── */
+  .demo-box {
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .demo-box-banner {
+    background: linear-gradient(135deg, var(--brand), #7C3AED);
+    color: #fff;
+    padding: 28px 32px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    flex-wrap: wrap;
+  }
+  .demo-box-banner .left { display: flex; flex-direction: column; gap: 8px; }
+  .demo-box-banner .badge-demo {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.2); color: #fff;
+    font-size: .72rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+    width: fit-content;
+  }
+  .demo-box-banner h3 { font-size: 1.25rem; font-weight: 800; }
+  .demo-box-banner p  { font-size: .85rem; opacity: .85; max-width: 42ch; line-height: 1.7; }
+  .demo-box-banner .btn-try {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff; color: var(--brand);
+    font-weight: 800; font-size: .9rem;
+    padding: 12px 28px; border-radius: 12px;
+    text-decoration: none; transition: all .2s; flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  }
+  .demo-box-banner .btn-try:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+  .demo-features {
+    padding: 20px 24px;
+    display: flex; gap: 16px; flex-wrap: wrap;
+    border-top: 1px solid var(--line);
+  }
+  .demo-feat-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--brand-tint); color: var(--brand);
+    font-size: .75rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+  }
+
+  /* ── スペック表 ── */
+  .spec-table { width: 100%; border-collapse: collapse; border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+  .spec-table thead th {
+    background: var(--brand-tint); color: var(--brand-deep);
+    font-size: .8rem; font-weight: 700; padding: 12px 16px;
+    text-align: left; border-bottom: 1px solid var(--line);
+  }
+  .spec-table tbody tr { border-bottom: 1px solid var(--line); background: var(--card); }
+  .spec-table tbody tr:last-child { border-bottom: none; }
+  .spec-table tbody td { padding: 12px 16px; font-size: .86rem; }
+  .spec-table tbody td:first-child { font-weight: 700; color: var(--soft); width: 130px; background: var(--paper); }
+
+  /* ── ナビバー ── */
+  .nav-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(243,245,251,.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    padding: 0 20px;
+  }
+  .nav-bar .inner {
+    max-width: 860px; margin: 0 0 0 24px;
+    display: flex; align-items: center; height: 54px; gap: 10px;
+  }
+  .nav-logo {
+    font-weight: 800; font-size: 16px;
+    display: flex; align-items: center; gap: 7px;
+    text-decoration: none; color: var(--ink);
+  }
+
+  /* ── 規約セクション ── */
+  .notice-section {
+    background: var(--brand-tint);
+    padding: 52px 20px;
+    margin-top: 60px;
+  }
+  .notice-section .inner {
+    max-width: 860px; margin: 0 auto;
+  }
+  .notice-dl {
+    display: flex; flex-direction: column; gap: 14px;
+    font-size: .88rem; line-height: 1.75;
+  }
+  .notice-row {
+    display: grid; grid-template-columns: auto 1fr;
+    gap: 6px 18px; align-items: baseline;
+  }
+  .notice-dt { font-weight: 800; color: var(--brand-deep); white-space: nowrap; }
+  .notice-dd { color: var(--soft); }
+
+  /* ── フッター ── */
+  footer {
+    text-align: center;
+    padding: 32px 16px 52px;
+    font-size: .8rem;
+    color: var(--soft);
+    border-top: 1px solid var(--line);
+  }
+  footer a { color: var(--soft); text-decoration: underline; }
+  footer a:hover { color: var(--brand); }
+
+  /* ── アニメーション ── */
+  @keyframes cardIn { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+  .card { animation: cardIn .4s cubic-bezier(.2,.7,.2,1) both; }
+  @media(prefers-reduced-motion:reduce){ *, .card { animation:none!important; transition:none!important; } }
+  @media(max-width:480px) {
+    .fb-img-sm { max-width: 100%; }
+    .demo-box-banner { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ナビバー -->
+<div class="nav-bar">
+  <div class="inner">
+    <span class="nav-logo">
+      🤖 アシスタントAIチャットボット
+    </span>
+  </div>
+</div>
+
+<!-- ── TOP画像 ── -->
+<header>
+  <div style="padding:28px 28px 0; text-align:center;">
+    <img src="chatbot-images/top.png" style="width:100%;max-width:1100px;display:block;margin:0 auto;">
+  </div>
+</header>
+
+<div style="background:var(--paper);padding:32px 0 0;">
+  <div style="width:90%;max-width:1000px;margin:0 auto;">
+    <div class="demo-box">
+      <div class="demo-box-banner">
+        <div class="left">
+          <span class="badge-demo">🎮 体験版デモ</span>
+          <h3>アシスタントAIチャットボットを体験しよう</h3>
+          <p>サンプルデータで実際のチャット画面を体験できます。テキスト・画像・音声の機能をご確認いただけます。データの保存はありません。</p>
+        </div>
+        <a href="chatbot-demo.html" class="btn-try" target="_blank">▶ 今すぐ体験する</a>
+      </div>
+      <div class="demo-features">
+        <span class="demo-feat-pill">💬 テキストチャット</span>
+        <span class="demo-feat-pill">📷 画像送信</span>
+        <span class="demo-feat-pill">🎤 音声入力</span>
+        <span class="demo-feat-pill">🔊 読み上げ</span>
+        <span class="demo-feat-pill">🆘 困りボタン</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── 概要セクション ── -->
+  <p class="section-label">OVERVIEW</p>
+  <p class="section-title">授業中のつまずきをAIがその場でサポート</p>
+  <p class="section-desc">生徒が数学の問題でつまずいたとき、テキスト・画像・音声でAIに質問できます。AIはヒントのみを返し、答えは教えません。教師はリアルタイムで全生徒の状況を把握できます。</p>
+
+  <table class="spec-table" style="margin-bottom:40px;">
+    <thead>
+      <tr><th>項目</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>プラットフォーム</td><td>Google Apps Script (V8)</td></tr>
+      <tr><td>データ管理</td><td>Google スプレッドシート</td></tr>
+      <tr><td>AI</td><td>Azure OpenAI API</td></tr>
+      <tr><td>画像保存</td><td>Google Drive</td></tr>
+      <tr><td>対象</td><td>生徒・教師</td></tr>
+      <tr><td>動作環境</td><td>ブラウザ（スマートフォン対応）</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── 機能詳細 ── -->
+  <p class="section-label">機能一覧</p>
+  <p class="section-title">生徒の学びを止めない、6つの機能</p>
+  <p class="section-desc">テキスト・画像・音声で質問できるAIチャットと、教師がリアルタイムで状況を把握できるモニタリング機能を搭載しています。</p>
+
+  <!-- FEATURE 01: テキストチャット -->
+  <div class="feature-block" style="--accent:var(--brand)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--brand-tint)">💬</div>
+      <div class="fb-meta">
+        <div class="fb-number">FEATURE 01</div>
+        <div class="fb-title">テキストチャット</div>
+        <span class="fb-tag" style="background:var(--brand-tint);color:var(--brand)">生徒向け · 質問 · ヒント</span>
+      </div>
+    </div>
+    <div class="fb-img">
+      <img src="chatbot-images/feature-chat.png" alt="テキストチャット画面">
+    </div>
+    <div class="fb-desc">
+      生徒がテキストで数学の問題や疑問を送ると、AIがヒントを返します。答えを直接教えず、考えるきっかけを与えるプロンプト設計になっています。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">💡</span>
+        <div class="pt-body">
+          <strong>ヒント回答のみ</strong>
+          <span>答えや計算結果は返さず、次の一手を考えさせる設計</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">📝</span>
+        <div class="pt-body">
+          <strong>会話履歴を考慮</strong>
+          <span>直近5件の会話を文脈として参照し、連続した質問に対応</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">📊</span>
+        <div class="pt-body">
+          <strong>シートに自動記録</strong>
+          <span>生徒のやり取りはスプレッドシートにリアルタイム保存</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- FEATURE 02: 画像送信・解析 -->
+  <div class="feature-block" style="--accent:var(--green)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--green-tint)">📷</div>
+      <div class="fb-meta">
+        <div class="fb-number">FEATURE 02</div>
+        <div class="fb-title">画像送信・解析</div>
+        <span class="fb-tag" style="background:var(--green-tint);color:var(--green)">生徒向け · 画像 · カメラ</span>
+      </div>
+    </div>
+    <div class="fb-img">
+      <img src="chatbot-images/feature-image.png" alt="画像送信・解析画面">
+    </div>
+    <div class="fb-desc">
+      ノートや教科書の問題を写真で撮影して送ると、AIが画像を見てヒントを返します。スマートフォンのカメラを直接起動できます。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">📱</span>
+        <div class="pt-body">
+          <strong>カメラ直接起動</strong>
+          <span>スマホでワンタップで背面カメラが起動。撮影してすぐ送信できます。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">🗜️</span>
+        <div class="pt-body">
+          <strong>自動圧縮で通信量を節約</strong>
+          <span>最大1000pxにリサイズ・JPEG圧縮してから送信するため、スマホの重い写真でも安心です。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">🖼️</span>
+        <div class="pt-body">
+          <strong>Google Driveに自動保存</strong>
+          <span>送信画像はGoogle Driveに保存され、スプレッドシートからも確認できます。</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- FEATURE 03: 音声入力・読み上げ -->
+  <div class="feature-block" style="--accent:var(--orange)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--orange-tint)">🎤</div>
+      <div class="fb-meta">
+        <div class="fb-number">FEATURE 03</div>
+        <div class="fb-title">音声入力・読み上げ</div>
+        <span class="fb-tag" style="background:var(--orange-tint);color:var(--orange)">生徒向け · 音声 · アクセシビリティ</span>
+      </div>
+    </div>
+    <div class="fb-desc">
+      音声入力（Web Speech API）と音声読み上げ（Voicevox）に完全対応しており、タイピングに苦手意識を持つ生徒や、読むことに困難のある生徒にも最適です。音声で質問し、音声で返答を聞くことができるため、情報処理におけるハンディキャップを感じさせずに学びに参加できます。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">🎙️</span>
+        <div class="pt-body">
+          <strong>音声入力（Web Speech API）</strong>
+          <span>マイクボタンで話しかけるだけで質問を送信。タイピングが不要です。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">🔊</span>
+        <div class="pt-body">
+          <strong>音声読み上げ（Voicevox）</strong>
+          <span>AIの返答をVoicevox音声合成エンジンが読み上げ。生成AIの「声」と対話する体験ができます。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">🔇</span>
+        <div class="pt-body">
+          <strong>ミュート・リピート切替</strong>
+          <span>音声読み上げのON/OFFをワンタップで切替。最後のメッセージをリピート再生することもできます。</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- FEATURE 04: 困りボタン・教師通知 -->
+  <div class="feature-block" style="--accent:var(--red)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--red-tint)">🆘</div>
+      <div class="fb-meta">
+        <div class="fb-number">FEATURE 04</div>
+        <div class="fb-title">困りボタン・教師通知</div>
+        <span class="fb-tag" style="background:var(--red-tint);color:var(--red)">教師連携 · 支援 · リアルタイム</span>
+      </div>
+    </div>
+    <div class="fb-img">
+      <img src="chatbot-images/feature-help.png" alt="困りボタン・教師通知画面">
+    </div>
+    <div class="fb-desc">
+      「困っているときはここをタップ！」ボタンで教師に助けを求められます。教師側のスプレッドシートに「困り中」フラグが立ちます。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">🚨</span>
+        <div class="pt-body">
+          <strong>困りフラグ通知</strong>
+          <span>ボタンを押すと教師の個別状況一覧に「困り中」と表示</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">✅</span>
+        <div class="pt-body">
+          <strong>解除ボタン</strong>
+          <span>問題が解決したら「困り中解除」ボタンで状態を戻せる</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">👀</span>
+        <div class="pt-body">
+          <strong>教師がリアルタイム把握</strong>
+          <span>授業中でも机間指導しながら状況を確認できる</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- FEATURE 03: 個別チャット記録シートの自動生成 -->
+  <div class="feature-block" style="--accent:var(--green)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--green-tint)">📋</div>
+      <div class="fb-meta">
+        <div class="fb-number">FEATURE 05</div>
+        <div class="fb-title">生徒一人ひとりに専用チャット記録シートを自動生成</div>
+        <span class="fb-tag" style="background:var(--green-tint);color:var(--green)">教師向け · 記録 · 自動化</span>
+      </div>
+    </div>
+    <div class="fb-img">
+      <img src="chatbot-images/feature-log.png" alt="生徒ログ（教師画面）">
+    </div>
+    <div class="fb-desc">
+      初期設定シートに生徒名を記入するだけで、ひな形から個別シートが自動で複製され、ログイン用パスワードと紐づきます。ログイン後はそれぞれの生徒が自分専用の学習空間へ誘導される仕組みです。この個別シートには、生徒の発言・AIからの応答・タイムスタンプまですべてが蓄積され、学習の履歴そのものが記録媒体となります。教師は後から「誰が・いつ・何を質問し、どんな返答を得たか」を完全に把握できます。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">🗂️</span>
+        <div class="pt-body">
+          <strong>パスワードと個別シートを自動紐づけ</strong>
+          <span>初期設定シートへの記入だけで、生徒ごとの専用スペースが即座に用意されます。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">🕒</span>
+        <div class="pt-body">
+          <strong>タイムスタンプ付きで全発言を記録</strong>
+          <span>生徒の発言・AIの応答・送信時刻がすべてスプレッドシートに蓄積されます。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">👁️</span>
+        <div class="pt-body">
+          <strong>教師がいつでも閲覧可能</strong>
+          <span>授業中・授業後を問わず、各生徒のやり取りを教師側から完全に確認できます。</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- FEATURE 04: AI要約・逸脱検知・教師ダッシュボード -->
+  <div class="feature-block" style="--accent:var(--violet)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--violet-tint)">📊</div>
+      <div class="fb-meta">
+        <div class="fb-number">FEATURE 06</div>
+        <div class="fb-title">生成AIによる会話の要約と逸脱検知（教師ダッシュボード）</div>
+        <span class="fb-tag" style="background:var(--violet-tint);color:var(--violet)">教師向け · AI分析 · リアルタイム</span>
+      </div>
+    </div>
+    <div class="fb-desc" style="padding:18px 28px 0;">
+      生徒がチャットボットとやり取りを重ねる中で、その対話履歴をもとにAzure APIが要約を行い、「今この生徒がどのような内容を考えているのか」を教師が即座に把握できます。さらに、生成AIは生徒の発言が授業内容に沿っているかを判断し、雑談やゲームなど無関係な内容に逸脱している場合は「要支援」フラグを自動で立てます。
+    </div>
+
+    <!-- 個別状況一覧（図2） -->
+    <div style="margin:20px 28px 0;">
+      <div style="font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--violet);margin-bottom:8px;">図２ スプレッドシート「個別状況一覧」（教師画面）</div>
+      <div class="fb-img" style="margin:0;">
+        <img src="chatbot-images/feature-monitor.png" alt="個別状況一覧（教師画面）">
+      </div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:.855rem;line-height:1.65;">
+          <span style="background:var(--violet);color:#fff;font-weight:800;border-radius:6px;padding:2px 9px;flex-shrink:0;">ア</span>
+          <span style="color:var(--soft);">Azure APIによる<strong style="color:var(--ink);">会話の自動要約</strong>。「1.生徒の学習状況」「2.困っている様子の有無」「3.授業に関係のない発言の有無」の3観点を100字以内で箇条書き表示。教師が即座に生徒の理解状況を把握できます。</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:.855rem;line-height:1.65;">
+          <span style="background:var(--violet);color:#fff;font-weight:800;border-radius:6px;padding:2px 9px;flex-shrink:0;">イ</span>
+          <span style="color:var(--soft);"><strong style="color:var(--ink);">要支援フラグ（AI判断）</strong>。雑談・ゲームなど授業と無関係な内容への逸脱をAIが検知し、「要支援」と自動判定。教師が机間指導の優先順位を判断するための指標になります。</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:.855rem;line-height:1.65;">
+          <span style="background:var(--violet);color:#fff;font-weight:800;border-radius:6px;padding:2px 9px;flex-shrink:0;">ウ</span>
+          <span style="color:var(--soft);"><strong style="color:var(--ink);">困り中フラグ（生徒申告）</strong>。生徒がチャット画面の「困っているときはここをタップ！」ボタンを押すと「困り中」と表示。教師が声かけの優先度を判断しやすくなります。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 座席表（図3） -->
+    <div style="margin:24px 28px 0;">
+      <div style="font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--violet);margin-bottom:8px;">図３ スプレッドシート「座席表」（教師画面）</div>
+      <div class="fb-img" style="margin:0;">
+        <img src="chatbot-images/feature-seat.png" alt="座席表（教師画面）">
+      </div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:.855rem;line-height:1.65;">
+          <span style="background:var(--violet);color:#fff;font-weight:800;border-radius:6px;padding:2px 9px;flex-shrink:0;">ア</span>
+          <span style="color:var(--soft);">個別状況一覧と同じ<strong style="color:var(--ink);">AI要約が座席レイアウトで表示</strong>。クラス全体の学習状況を空間的に把握でき、どこに集中して声かけすべきかが一目でわかります。</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:.855rem;line-height:1.65;">
+          <span style="background:var(--violet);color:#fff;font-weight:800;border-radius:6px;padding:2px 9px;flex-shrink:0;">イ</span>
+          <span style="color:var(--soft);"><strong style="color:var(--ink);">要支援フラグ（AI判断）</strong>が座席表上にも反映。授業から逸脱している生徒の位置を座席図で確認でき、机間巡視の動線づくりに活用できます。</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:.855rem;line-height:1.65;">
+          <span style="background:var(--violet);color:#fff;font-weight:800;border-radius:6px;padding:2px 9px;flex-shrink:0;">ウ</span>
+          <span style="color:var(--soft);"><strong style="color:var(--ink);">困り中フラグ（生徒申告）</strong>が座席表上にも表示。どの席の生徒がSOSを出しているかを教室レイアウト上で即座に把握できます。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 図5：チャットボットプロンプト -->
+    <div style="margin:24px 28px 0;">
+      <div style="font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--violet);margin-bottom:8px;">図５ チャットボットのプロンプト（教師画面）</div>
+      <div class="fb-img" style="margin:0;">
+        <img src="chatbot-images/feature-prompt.png" alt="チャットボットのプロンプト（教師画面）">
+      </div>
+      <div style="margin-top:10px;padding:12px 16px;background:var(--paper);border-radius:10px;border:1px solid var(--line);font-size:.855rem;color:var(--soft);line-height:1.75;">
+        教師がスプレッドシートの「プロンプト」シートA2セルに指示文を入力するだけで、AIの応答スタイルや深さを自在に変えられます。数学の「ヒントのみ返す」設定から、理科・社会・国語など教科を問わず対応可能。<strong style="color:var(--ink);">授業の目的に応じた専門的な対話</strong>が実現します。
+      </div>
+    </div>
+
+    <!-- 図6：状況判断プロンプト -->
+    <div style="margin:24px 28px 0;">
+      <div style="font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--violet);margin-bottom:8px;">図６ 個人の状況を判断する教師のためのプロンプト（教師画面）</div>
+      <div class="fb-img" style="margin:0;">
+        <img src="chatbot-images/feature-prompt2.png" alt="個人の状況を判断する教師のためのプロンプト（教師画面）">
+      </div>
+      <div style="margin-top:10px;padding:12px 16px;background:var(--paper);border-radius:10px;border:1px solid var(--line);font-size:.855rem;color:var(--soft);line-height:1.75;">
+        「個別状況一覧」や「座席表」に何をどのように要約・表示させるかも、教師がプロンプトで自由に設定できます（A5セル）。3つの観点（①学習状況・②困り度・③逸脱の有無）で整理し、<strong style="color:var(--ink);">授業に応じた状況把握のカスタマイズ</strong>が可能です。
+      </div>
+    </div>
+
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- FEATURE 06: チャット初期化 -->
+  <div class="feature-block" style="--accent:var(--sky)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--sky-tint)">🔄</div>
+      <div class="fb-meta">
+        <div class="fb-number">FEATURE 07</div>
+        <div class="fb-title">チャット初期化</div>
+        <span class="fb-tag" style="background:var(--sky-tint);color:var(--sky)">管理 · プライバシー · 授業切替</span>
+      </div>
+    </div>
+    <div class="fb-img">
+      <img src="chatbot-images/feature-reset.png" alt="チャット初期化画面">
+    </div>
+    <div class="fb-desc">
+      「チャットの内容を初期化する」ボタンで画面表示をリセットできます。スプレッドシートのログは保持されるため、教師は過去の記録を引き続き確認できます。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">🔒</span>
+        <div class="pt-body">
+          <strong>確認モーダル</strong>
+          <span>誤タップ防止のため、リセット前に確認ダイアログを表示</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">📋</span>
+        <div class="pt-body">
+          <strong>ログは保持</strong>
+          <span>画面表示のみリセット。シートのデータは削除されない</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">🔁</span>
+        <div class="pt-body">
+          <strong>授業ごとのリセット</strong>
+          <span>毎時間の始めにリセットして使い回しができる</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- ── セットアップセクション ── -->
+  <p class="section-label">セットアップ</p>
+  <p class="section-title">導入手順</p>
+  <p class="section-desc">スプレッドシートのコピーから始めて、7ステップで授業に導入できます。AzureのAPIキー取得方法も含め、初めての方でも進められるよう丁寧に説明しています。</p>
+
+  <!-- STEP 01 -->
+  <div class="feature-block" style="--accent:var(--brand)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--brand-tint)">1️⃣</div>
+      <div class="fb-meta">
+        <div class="fb-number">STEP 01</div>
+        <div class="fb-title">スプレッドシートをコピーする</div>
+        <span class="fb-tag" style="background:var(--brand-tint);color:var(--brand)">準備</span>
+      </div>
+    </div>
+    <div class="fb-desc" style="padding-top:18px;">
+      下のボタンを押すと、Googleスプレッドシートのコピー画面が開きます。「コピーを作成」を押して、自分のGoogleドライブに保存してください。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">📋</span>
+        <div class="pt-body">
+          <strong>Googleアカウントでログインした状態でボタンを押してください</strong>
+          <span>コピーしたスプレッドシートは自分のGoogleドライブに作成されます。元のシートには変更が加わりません。</span><br>
+          <a href="https://docs.google.com/spreadsheets/d/12q0hX5UnDRJR3PE2Ptq8iNaT04jVQUp58VFKc2ctivk/copy?" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;padding:8px 20px;background:var(--brand);color:#fff;border-radius:8px;text-decoration:none;font-size:.88rem;font-weight:700;">📄 スプレッドシートをコピー</a>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- STEP 02 -->
+  <div class="feature-block" style="--accent:var(--green)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--green-tint)">2️⃣</div>
+      <div class="fb-meta">
+        <div class="fb-number">STEP 02</div>
+        <div class="fb-title">初期設定シートに生徒情報を入力する</div>
+        <span class="fb-tag" style="background:var(--green-tint);color:var(--green)">生徒情報入力</span>
+      </div>
+    </div>
+    <div class="fb-desc" style="padding-top:18px;">
+      コピーしたスプレッドシートの「初期設定」シートを開き、クラス情報と生徒一人ひとりの情報を入力します。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">🏫</span>
+        <div class="pt-body">
+          <strong>1行目（見出し行の下）から順に1人1行ずつ入力</strong>
+          <span>学年・組・名簿番号・名前・パスワード（4桁）を1列ずつ入力してください。クラス全員分を入力します。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">🔐</span>
+        <div class="pt-body">
+          <strong>パスワードは生徒ごとに異なる4桁にしてください</strong>
+          <span>同じパスワードが重複していると、ログイン時に正しく識別できません。例：0001、0002、0003…など出席番号を使う方法が便利です。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">👩‍🏫</span>
+        <div class="pt-body">
+          <strong>教師用のパスワードも別途設定できます</strong>
+          <span>教師ダッシュボード（個別状況一覧・座席表）へのアクセス用パスワードを設定します。詳しくはPDFマニュアルをご参照ください。</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- STEP 03 -->
+  <div class="feature-block" style="--accent:var(--orange)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--orange-tint)">3️⃣</div>
+      <div class="fb-meta">
+        <div class="fb-number">STEP 03</div>
+        <div class="fb-title">プロンプトシートにAIへの指示文を入力する</div>
+        <span class="fb-tag" style="background:var(--orange-tint);color:var(--orange)">AIカスタマイズ</span>
+      </div>
+    </div>
+    <div class="fb-desc" style="padding-top:18px;">
+      「プロンプト」シートを開き、AIがどのように生徒に回答するかを文章で指示します。教科・単元・ヒントの出し方を自由にカスタマイズできます。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">📝</span>
+        <div class="pt-body">
+          <strong>A2セル：チャットボット用プロンプト（生徒へのヒント指示）</strong>
+          <span>AIが生徒の質問にどう答えるかを指定します。例：「あなたは数学の先生です。答えは教えず、次の一手を考えさせるヒントだけを返してください。」のように入力します。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">📊</span>
+        <div class="pt-body">
+          <strong>A5セル：状況モニタリング用プロンプト（教師ダッシュボード向け）</strong>
+          <span>教師が見る「個別状況一覧」「座席表」への要約・逸脱判定に使うプロンプトを設定します。例：「①学習状況　②困り度　③逸脱の有無、の3点を100字以内で箇条書きしてください。」</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">📚</span>
+        <div class="pt-body">
+          <strong>数学以外の教科でも対応可能</strong>
+          <span>プロンプトを書き換えるだけで、理科・社会・英語など任意の教科に切り替えられます。</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- STEP 04 -->
+  <div class="feature-block" style="--accent:var(--red)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--red-tint)">4️⃣</div>
+      <div class="fb-meta">
+        <div class="fb-number">STEP 04</div>
+        <div class="fb-title">Apps Scriptから「個人シートの作成」を実行する</div>
+        <span class="fb-tag" style="background:var(--red-tint);color:var(--red)">シート生成</span>
+      </div>
+    </div>
+    <div class="fb-desc" style="padding-top:18px;">
+      スプレッドシートのメニューから「拡張機能 → Apps Script」を開き、生徒ごとの個別シートをまとめて自動生成します。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">🔧</span>
+        <div class="pt-body">
+          <strong>① スプレッドシートのメニューから「拡張機能」→「Apps Script」をクリック</strong>
+          <span>Google Apps Scriptの編集画面が開きます。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">▶️</span>
+        <div class="pt-body">
+          <strong>② 関数の選択欄で「個人シートの作成」を選択して「実行」ボタンを押す</strong>
+          <span>初期設定シートに入力した生徒全員分の個別シートが自動で作成されます。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">✅</span>
+        <div class="pt-body">
+          <strong>③ 初回は「アクセスを承認」画面が表示されます</strong>
+          <span>「権限を確認」→「（Googleアカウントを選択）」→「詳細」→「プロジェクト名に移動（安全でないページ）」→「許可」の順で承認してください。これはGASがスプレッドシートにアクセスするための許可です。</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- STEP 05 -->
+  <div class="feature-block" style="--accent:var(--violet)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--violet-tint)">5️⃣</div>
+      <div class="fb-meta">
+        <div class="fb-number">STEP 05</div>
+        <div class="fb-title">AzureのAPIキーをスクリプトプロパティに設定する</div>
+        <span class="fb-tag" style="background:var(--violet-tint);color:var(--violet)">APIキー設定（重要）</span>
+      </div>
+    </div>
+    <div class="fb-desc" style="padding-top:18px;">
+      このシステムはAzure OpenAI APIを使ってAIに回答させています。AzureポータルでAPIキーとエンドポイントを取得し、GASのスクリプトプロパティに登録します。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">⚙️</span>
+        <div class="pt-body">
+          <strong>Apps Scriptの画面で「プロジェクトの設定（⚙️）」→「スクリプトプロパティ」を開く</strong>
+          <span>「プロパティを追加」を3回繰り返して、以下の3つをすべて登録してください。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- プロパティ詳細テーブル -->
+    <div style="margin:16px 28px 0;">
+      <div style="border:1.5px solid var(--violet);border-radius:12px;overflow:hidden;">
+        <!-- プロパティ1 -->
+        <div style="padding:14px 18px;border-bottom:1px solid var(--line);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span style="background:var(--violet);color:#fff;font-size:.72rem;font-weight:800;padding:2px 10px;border-radius:999px;">プロパティ 1</span>
+          </div>
+          <div style="font-family:monospace;font-size:.9rem;font-weight:800;color:var(--violet);margin-bottom:4px;">AZURE_OPENAI_ENDPOINT</div>
+          <div style="font-size:.84rem;color:var(--soft);line-height:1.7;">
+            AzureポータルでOpenAIリソースを作成すると発行されるURLです。<br>
+            例：<span style="font-family:monospace;background:var(--paper);padding:2px 8px;border-radius:6px;font-size:.82rem;">https://YOUR_RESOURCE_NAME.openai.azure.com</span><br>
+            <span style="font-size:.8rem;">Azureポータル → 作成したOpenAIリソース →「キーとエンドポイント」から確認できます。</span>
+          </div>
+        </div>
+        <!-- プロパティ2 -->
+        <div style="padding:14px 18px;border-bottom:1px solid var(--line);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span style="background:var(--violet);color:#fff;font-size:.72rem;font-weight:800;padding:2px 10px;border-radius:999px;">プロパティ 2</span>
+          </div>
+          <div style="font-family:monospace;font-size:.9rem;font-weight:800;color:var(--violet);margin-bottom:4px;">AZURE_OPENAI_API_KEY</div>
+          <div style="font-size:.84rem;color:var(--soft);line-height:1.7;">
+            AzureポータルのAPIキー（「キー1」または「キー2」）です。<br>
+            <span style="font-family:monospace;background:var(--paper);padding:2px 8px;border-radius:6px;font-size:.82rem;">xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>（32桁の英数字）<br>
+            <span style="font-size:.8rem;">このキーは他人に見せないよう大切に管理してください。</span>
+          </div>
+        </div>
+        <!-- プロパティ3 -->
+        <div style="padding:14px 18px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span style="background:var(--violet);color:#fff;font-size:.72rem;font-weight:800;padding:2px 10px;border-radius:999px;">プロパティ 3</span>
+          </div>
+          <div style="font-family:monospace;font-size:.9rem;font-weight:800;color:var(--violet);margin-bottom:4px;">AZURE_DEPLOYMENT_NAME</div>
+          <div style="font-size:.84rem;color:var(--soft);line-height:1.7;">
+            Azure AI Foundry（旧Azure OpenAI Studio）でデプロイしたモデルの「デプロイ名」です。<br>
+            例：<span style="font-family:monospace;background:var(--paper);padding:2px 8px;border-radius:6px;font-size:.82rem;">gpt-35-turbo</span><br>
+            <span style="font-size:.8rem;">画像を使う機能（Vision）を利用する場合は <span style="font-family:monospace;">gpt-4o</span> など Vision対応モデルが必要です。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin:14px 28px 0;padding:12px 16px;background:var(--orange-tint);border-radius:10px;border-left:4px solid var(--orange);font-size:.84rem;color:var(--ink);line-height:1.75;">
+      <strong>⚠️ 入力後は必ず「スクリプトプロパティを保存」ボタンを押してください。</strong><br>
+      3つすべてのプロパティが正しく設定されていないと、AIとのチャットが機能しません。
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- STEP 06 -->
+  <div class="feature-block" style="--accent:var(--sky)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--sky-tint)">6️⃣</div>
+      <div class="fb-meta">
+        <div class="fb-number">STEP 06</div>
+        <div class="fb-title">GASをウェブアプリとしてデプロイする</div>
+        <span class="fb-tag" style="background:var(--sky-tint);color:var(--sky)">デプロイ</span>
+      </div>
+    </div>
+    <div class="fb-desc" style="padding-top:18px;">
+      Apps Scriptの画面からウェブアプリとして公開します。公開することで、生徒がブラウザからアクセスできるURLが発行されます。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">🚀</span>
+        <div class="pt-body">
+          <strong>① 右上の「デプロイ」→「新しいデプロイ」をクリック</strong>
+          <span>種類の選択で「ウェブアプリ」を選んでください。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">👤</span>
+        <div class="pt-body">
+          <strong>② 「次のユーザーとして実行」→「自分」を選択</strong>
+          <span>「アクセスできるユーザー」は「全員」に設定してください。これで生徒がURLにアクセスできるようになります。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">✅</span>
+        <div class="pt-body">
+          <strong>③ 「デプロイ」を押して承認画面に従う</strong>
+          <span>初回は「アクセスを承認」が表示されます。STEP 04と同様の手順で許可してください。</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- STEP 07 -->
+  <div class="feature-block" style="--accent:var(--green)">
+    <div class="feature-block-head">
+      <div class="fb-icon" style="background:var(--green-tint)">7️⃣</div>
+      <div class="fb-meta">
+        <div class="fb-number">STEP 07</div>
+        <div class="fb-title">生成されたURLを生徒に配布して利用開始</div>
+        <span class="fb-tag" style="background:var(--green-tint);color:var(--green)">配布・完了</span>
+      </div>
+    </div>
+    <div class="fb-desc" style="padding-top:18px;">
+      デプロイが完了するとURLが表示されます。このURLと各自のパスワードを生徒に配布すれば、すぐに授業で使い始められます。
+    </div>
+    <div class="fb-points">
+      <div class="fb-point">
+        <span class="pt-icon">🔗</span>
+        <div class="pt-body">
+          <strong>デプロイ後に表示される「ウェブアプリのURL」をコピーして配布</strong>
+          <span>Google Classroomや配布プリントにURLを貼り付けて生徒に共有します。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">📱</span>
+        <div class="pt-body">
+          <strong>QRコードにして配布すると便利です</strong>
+          <span>スマートフォンでもすぐにアクセスできます。無料のQRコード生成サービスでURLをQRコードに変換してください。</span>
+        </div>
+      </div>
+      <div class="fb-point">
+        <span class="pt-icon">🔐</span>
+        <div class="pt-body">
+          <strong>生徒には「URL」と「パスワード（4桁）」の2つを伝えてください</strong>
+          <span>生徒はURLを開いてパスワードを入力するだけでチャットを始められます。</span>
+        </div>
+      </div>
+    </div>
+    <div class="feature-block-foot"></div>
+  </div>
+
+  <!-- Azure アカウント取得ガイド -->
+  <div style="background:var(--violet-tint);border-radius:16px;padding:24px 28px;margin-bottom:32px;border-left:4px solid var(--violet);">
+    <p style="font-size:.95rem;font-weight:800;color:var(--violet);margin-bottom:10px;">🌐 Azure OpenAI APIを取得するには？（初めての方へ）</p>
+    <p style="font-size:.85rem;color:var(--soft);line-height:1.8;margin-bottom:14px;">
+      Azureのアカウントを持っていない場合は、まず無料アカウントを作成し、Azure OpenAIリソースを作成します。<br>
+      詳しい手順はセットアップマニュアル（P.6〜P.12）をご参照ください。
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:.84rem;line-height:1.75;color:var(--ink);">
+      <div><span style="font-weight:800;color:var(--violet);">① </span>Microsoftアカウントを作成（または既存のものでサインイン）</div>
+      <div><span style="font-weight:800;color:var(--violet);">② </span>Azureポータル（portal.azure.com）でAzureの無料アカウントを作成</div>
+      <div><span style="font-weight:800;color:var(--violet);">③ </span>「Azure OpenAI」リソースを新規作成（リージョン：Japan East など）</div>
+      <div><span style="font-weight:800;color:var(--violet);">④ </span>Azure AI Foundry →「モデルのデプロイ」で <span style="font-family:monospace;background:#fff;padding:1px 7px;border-radius:5px;">gpt-35-turbo</span> をデプロイ</div>
+      <div><span style="font-weight:800;color:var(--violet);">⑤ </span>リソースの「キーとエンドポイント」ページでAPIキーとエンドポイントURLを取得 → STEP 05で入力</div>
+    </div>
+  </div>
+
+  <!-- PDF ボックス -->
+  <div style="background:var(--brand-tint);border-radius:14px;padding:20px 24px;margin-bottom:32px;border-left:4px solid var(--brand);">
+    <p style="font-size:.9rem;font-weight:700;color:var(--brand);margin-bottom:6px;">📄 セットアップマニュアル</p>
+    <p style="font-size:.85rem;color:var(--soft);margin-bottom:14px;">設定方法の詳細はPDFマニュアルをご参照ください。</p>
+    <a href="アシスタントAIチャットボット_セットアップマニュアル.pdf" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--brand);color:#fff;border-radius:10px;text-decoration:none;font-size:.88rem;font-weight:700;box-shadow:0 2px 8px rgba(79,70,229,.25);">
+      📄 セットアップマニュアルを開く（PDF）
+    </a>
+  </div>
+
+  <div style="background:var(--sky-tint);border-radius:14px;padding:20px 24px;margin-bottom:32px;border-left:4px solid var(--sky);">
+    <p style="font-size:.9rem;font-weight:700;color:var(--sky);margin-bottom:6px;">🔬 概要資料</p>
+    <p style="font-size:.85rem;color:var(--soft);margin-bottom:14px;">このシステムの概要・研究背景はこちらからご覧いただけます。</p>
+    <a href="アシスタントAIチャットボット_概要.pdf" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--sky);color:#fff;border-radius:10px;text-decoration:none;font-size:.88rem;font-weight:700;box-shadow:0 2px 8px rgba(14,165,233,.25);">
+      🔬 概要資料を開く（PDF）
+    </a>
+  </div>
+
+</main>
+
+<!-- ── 規約 ── -->
+<section class="notice-section">
+  <div class="inner">
+    <p class="section-label">Notice</p>
+    <p class="section-title" style="margin-bottom:24px;">ご利用にあたって</p>
+    <dl class="notice-dl">
+      <div class="notice-row">
+        <dt class="notice-dt">⚠️ 免責事項</dt>
+        <dd class="notice-dd">AIの回答はヒントとして活用してください。最終的な教育的判断は教師が行ってください。</dd>
+      </div>
+      <div class="notice-row">
+        <dt class="notice-dt">🔒 データの取り扱い</dt>
+        <dd class="notice-dd">生徒のやり取りはGoogle スプレッドシートおよびGoogle Driveに保存されます。適切なアクセス管理のもとで運用してください。</dd>
+      </div>
+      <div class="notice-row">
+        <dt class="notice-dt">©️ 著作権</dt>
+        <dd class="notice-dd">&copy; TAKANO tools | アシスタントAIチャットボット</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<footer>
+  &copy; TAKANO tools &nbsp;|&nbsp; アシスタントAIチャットボット
+</footer>
+
+</body>
+</html>

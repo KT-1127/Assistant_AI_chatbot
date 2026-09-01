@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Feature-Policy" content="microphone *; camera *">
+  <meta http-equiv="Permissions-Policy" content="microphone=*, camera=*">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アシスタントAIチャットボット ― 体験デモ</title>
+  <link rel="icon" href="chatbot-images/favicon.png" type="image/png">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background: #f1f1f1;
+    }
+
+    /* ── デモ注意バナー ── */
+    #demoBanner {
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      color: #fff;
+      text-align: center;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    #demoBanner a {
+      color: #fff;
+      background: rgba(255,255,255,0.25);
+      padding: 4px 12px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    #demoBanner a:hover { background: rgba(255,255,255,0.4); }
+
+    /* ── ログイン画面 ── */
+    #loginView {
+      width: 400px;
+      margin: 80px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    #loginView h2 {
+      text-align: center;
+      color: #333;
+      margin-top: 0;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    #loginView .demo-hint {
+      background: #EEF2FF;
+      border: 1px solid #C7D2FE;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #4338CA;
+      text-align: center;
+    }
+    #loginView label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    #loginView input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    #loginView button {
+      width: 100%;
+      padding: 10px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #loginView button:hover { background: #2563eb; }
+    #loginView .error {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    /* ── チャット画面 ── */
+    #chatView {
+      display: none;
+      height: calc(100vh - 42px); /* バナー分引く */
+      flex-direction: column;
+    }
+    .header {
+      background: #00c300;
+      color: #fff;
+      padding: 15px;
+      font-size: 18px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .header-right { display: flex; gap: 8px; }
+
+    .help-btn {
+      padding: 6px 10px; background: #ff9900; color: #fff;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 14px;
+    }
+    .help-btn:hover { background: #ff7600; }
+
+    .cancel-btn {
+      padding: 6px 10px; background: #2196F3; color: #fff;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 14px;
+    }
+    .cancel-btn:hover { background: #1976D2; }
+
+    .help-label {
+      padding: 6px 10px; background: #ff9900; color: #fff;
+      border-radius: 8px; font-size: 14px;
+    }
+
+    /* ボットアバター */
+    #botAvatar {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      position: absolute;
+      right: 70px;
+      top: 52px; /* バナー分下げる */
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: #e5ddd5;
+    }
+
+    .bubble {
+      max-width: 70%;
+      padding: 10px 15px;
+      margin: 10px;
+      border-radius: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      word-wrap: break-word;
+      font-size: 16px;
+    }
+    .user-bubble {
+      background: #dcf8c6;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    .bot-bubble {
+      background: #fff;
+      align-self: flex-start;
+      margin-right: auto;
+    }
+
+    /* タイピングアニメーション */
+    .typing-bubble {
+      background: #fff;
+      align-self: flex-start;
+      margin-right: auto;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 14px 20px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      background: #aaa; border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: .2s; }
+    .dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-8px); }
+    }
+
+    /* 画像プレビュー */
+    #imagePreviewArea {
+      display: none;
+      padding: 10px;
+      background: #e1e1e1;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+    }
+    #imagePreviewArea img {
+      width: 60px; height: 60px;
+      object-fit: cover; border-radius: 8px; border: 2px solid #fff;
+    }
+    #previewFileName {
+      flex: 1; font-size: 14px; color: #333;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #cancelUploadBtn {
+      background: #ef4444; color: #fff; border: none;
+      padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    }
+    #cancelUploadBtn:hover { background: #dc2626; }
+
+    /* 入力エリア */
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      background: #f0f0f0;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    }
+    .chat-input input {
+      flex: 1; padding: 10px;
+      border: 1px solid #ccc; border-radius: 20px;
+      font-size: 16px; outline: none;
+    }
+    .chat-input button {
+      margin-left: 10px;
+      background: #00c300;
+      border: none; color: #fff;
+      padding: 10px 15px; border-radius: 20px;
+      font-size: 16px; cursor: pointer;
+    }
+    .chat-input button:hover { background: #009a00; }
+
+    #micBtn, #uploadBtn, #muteBtn, #replayBtn {
+      width: 56px; height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      margin-left: 10px;
+    }
+    #uploadBtn { background: #2196F3; }
+    #uploadBtn:hover { background: #1976D2; }
+
+    .reset-btn {
+      padding: 6px 10px; background: #6b7280; color: #fff;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 14px;
+    }
+    .reset-btn:hover { background: #4b5563; }
+
+    /* Reset確認モーダル */
+    #resetModalBackdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none; align-items: center; justify-content: center;
+      z-index: 2000;
+    }
+    #resetModal {
+      background: #fff; border-radius: 12px; padding: 20px; width: 360px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center;
+    }
+    #resetModal h3 { margin: 0 0 8px; font-size: 18px; }
+    #resetModal p { margin: 0 0 16px; color: #444; }
+    #resetModal .actions { display: flex; gap: 10px; justify-content: center; }
+    #resetYesBtn, #resetNoBtn {
+      flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 15px;
+    }
+    #resetYesBtn { background: #ef4444; color: #fff; }
+    #resetYesBtn:hover { background: #dc2626; }
+    #resetNoBtn { background: #e5e7eb; color: #111; }
+    #resetNoBtn:hover { background: #d1d5db; }
+
+    /* 画像ソース選択モーダル */
+    #imageSourceModalBackdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none; align-items: center; justify-content: center;
+      z-index: 2500;
+    }
+    #imageSourceModal {
+      background: #fff; border-radius: 12px; padding: 20px; width: 300px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center;
+    }
+    #imageSourceModal h3 { margin: 0 0 15px; font-size: 16px; color: #333; }
+    .source-actions { display: flex; flex-direction: column; gap: 10px; }
+    .source-btn {
+      padding: 12px; border: none; border-radius: 8px; cursor: pointer;
+      font-size: 15px; font-weight: bold; color: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    #chooseCameraBtn { background: #00c300; }
+    #chooseCameraBtn:hover { background: #009a00; }
+    #chooseFileBtn { background: #2196F3; }
+    #chooseFileBtn:hover { background: #1976D2; }
+    #closeSourceModalBtn {
+      background: #e5e7eb; color: #111; padding: 10px;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 14px; margin-top: 5px;
+    }
+    #closeSourceModalBtn:hover { background: #d1d5db; }
+
+    /* 困りボタン通知トースト */
+    #helpToast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: #1f2937; color: #fff;
+      padding: 10px 20px; border-radius: 10px;
+      font-size: 13px; display: none; z-index: 3000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    @media (max-width: 500px) {
+      #botAvatar { width: 90px; height: 90px; right: 10px; top: 52px; }
+      #loginView { width: 90%; margin: 40px auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- デモ注意バナー -->
+<div id="demoBanner">
+  🎮 これは体験デモです。AIへの接続はなく、サンプル回答が返ります。
+  <a href="chatbot.html">← 詳細ページへ戻る</a>
+</div>
+
+<!-- ログイン画面 -->
+<div id="loginView">
+  <h2>アシスタントAIチャットボット<br>パスワード（４桁の数字）</h2>
+  <div class="demo-hint">
+    🔑 デモ用パスワード：<strong>1234</strong>
+  </div>
+  <form id="loginForm">
+    <label for="password">パスワード:</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" required>
+    <button type="submit">ログイン</button>
+    <div id="loginError" class="error"></div>
+  </form>
+</div>
+
+<!-- チャット画面 -->
+<div id="chatView">
+  <div class="header">
+    <span id="userNameDisplay"></span><span> さんのチャット </span>
+    <span id="helpStatus" class="help-label" style="display:none;">困り中</span>
+    <button id="helpBtn" class="help-btn">困っているときはここをタップ！</button>
+    <button id="cancelBtn" class="cancel-btn" style="display:none;">困り中解除</button>
+    <button id="resetChatBtn" class="reset-btn">チャットの内容を初期化する</button>
+  </div>
+
+  <img id="botAvatar" src="" alt="Bot">
+
+  <div id="chatContainer" class="chat-container"></div>
+
+  <!-- 送信前画像プレビューエリア -->
+  <div id="imagePreviewArea">
+    <img id="previewImage" src="" alt="Preview">
+    <span id="previewFileName">選択されていません</span>
+    <button id="cancelUploadBtn"><i class="fas fa-trash"></i> 削除</button>
+  </div>
+
+  <!-- 入力エリア -->
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="メッセージを入力（Enterで送信）">
+    <button id="uploadBtn" title="画像を添付">
+      <i class="fas fa-image"></i>
+    </button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+    <button id="micBtn" title="音声入力">
+      <i class="fas fa-microphone"></i>
+    </button>
+    <button id="muteBtn" title="ミュート">
+      <i id="muteIcon" class="fas fa-volume-xmark"></i>
+    </button>
+    <button id="replayBtn" title="リピート">
+      <i class="fas fa-rotate-right"></i>
+    </button>
+    <button id="sendBtn">送信</button>
+  </div>
+</div>
+
+<!-- 困りボタントースト -->
+<div id="helpToast">📢 先生に「困り中」フラグを送りました！（デモ）</div>
+
+<!-- Reset確認モーダル -->
+<div id="resetModalBackdrop">
+  <div id="resetModal">
+    <h3>チャットを初期化しますか？</h3>
+    <p>画面の履歴は消え、最初の案内に戻ります。</p>
+    <div class="actions">
+      <button id="resetYesBtn">Yes</button>
+      <button id="resetNoBtn">No</button>
+    </div>
+  </div>
+</div>
+
+<!-- 画像取得元選択モーダル -->
+<div id="imageSourceModalBackdrop">
+  <div id="imageSourceModal">
+    <h3>画像の追加方法を選択してください</h3>
+    <div class="source-actions">
+      <button id="chooseCameraBtn" class="source-btn">
+        <i class="fas fa-camera"></i> カメラを起動する
+      </button>
+      <button id="chooseFileBtn" class="source-btn">
+        <i class="fas fa-folder-open"></i> ファイル・写真から選択
+      </button>
+      <button id="closeSourceModalBtn">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<audio id="botAudio"></audio>
+
+<script>
+// ─────────────────────────────────────────
+// デモ用設定
+// ─────────────────────────────────────────
+const DEMO_USERS = {
+  '1234': { userName: '1_1_たなか', displayName: 'たなか' }
+};
+
+// デモ用AIボットアバター画像（本物と同じDriveのURLを使用）
+const BOT_IMAGE_IDLE     = "https://drive.google.com/thumbnail?sz=w1000&id=1ncb5XBE0OxoNNoIQcCsGSiHm_qQK68LW";
+const BOT_IMAGE_THINKING = "https://drive.google.com/thumbnail?sz=w1000&id=1NHG_oPMZlol25-WgG74IDP89yj2oVSkc";
+const BOT_IMAGE_TALKING  = "https://drive.google.com/thumbnail?sz=w1000&id=1NdnJ03t5wangTp_AoDtk4uSnP80hqtrD";
+
+const INITIAL_MESSAGE = "私の名前は「チャッピー」です。<br>一緒に勉強をしましょう！<br>まず、どのようなことで困っていますか？";
+
+// デモ用チャット履歴（本物のスプレッドシートの代わり）
+const DEMO_HISTORY = [
+  {
+    userHtml: "平行四辺形の面積の求め方がわかりません",
+    botHtml: "いいところに気づきましたね！<br>平行四辺形の面積を求めるヒントを出します。<br>長方形の面積の求め方は覚えていますか？<br>平行四辺形を「切って動かす」と長方形に変身させることができますよ。底辺と高さに注目してみてください。"
+  },
+  {
+    userHtml: "底辺×高さ？",
+    botHtml: "その通り！よく気づきましたね。<br>底辺 × 高さ が平行四辺形の面積の公式です。<br>ここで一つ確認しましょう。「高さ」とは底辺に対してどの方向の長さだと思いますか？斜めの辺の長さではないことに注意してみてください。"
+  }
+];
+
+// デモ用AI回答パターン（キーワードで分岐）
+const DEMO_RESPONSES = [
+  { keywords: ['面積', '平行四辺形'], reply: '平行四辺形の面積は「底辺 × 高さ」で求めます。<br>ポイントは「高さ」が底辺に対して垂直な長さということです。斜めの辺の長さとは違いますよ。実際に図を書いて確認してみましょう！' },
+  { keywords: ['三角形', '面積'], reply: '三角形の面積のヒントです。<br>三角形は平行四辺形の半分と考えると分かりやすいですよ。<br>「底辺 × 高さ ÷ 2」という公式になりますが、なぜ2で割るのか、平行四辺形と比べて考えてみましょう。' },
+  { keywords: ['円', '面積', '円周'], reply: '円の面積は「半径 × 半径 × π（パイ）」で求めます。<br>πは約3.14ですね。<br>まず「半径」と「直径」の違いは分かりますか？そこから整理してみましょう！' },
+  { keywords: ['方程式', '解き方', '解く'], reply: '方程式を解くヒントです！<br>「等号（＝）の両辺に同じ操作をしてよい」というルールが基本です。<br>xを含む項を左辺、数字だけの項を右辺にまとめることを意識してみてください。どのステップで困っていますか？' },
+  { keywords: ['比例', '反比例'], reply: '比例と反比例の違いを整理しましょう。<br>比例はxが2倍になるとyも2倍になります。<br>反比例はxが2倍になるとyは1/2になります。<br>式で表すと、比例は y = ax、反比例は y = a/x となりますよ。グラフの形の違いも確認してみましょう！' },
+  { keywords: ['分からない', 'わからない', 'わかりません', '分かりません'], reply: 'どのあたりで詰まっていますか？<br>もう少し詳しく教えてもらえると、ピッタリなヒントが出せますよ！<br>例えば「どの問題か」「どこまでは分かったか」を教えてください。' },
+  { keywords: ['ありがとう', 'わかった', '分かった', '解けた'], reply: 'よかったです！理解できましたね。<br>次の問題もチャレンジしてみましょう。<br>また困ったらいつでも聞いてください！' },
+  { keywords: ['画像', '写真'], reply: '画像を確認しました！<br>問題の内容を見てヒントをお伝えします。<br>まず、問題文にある「求めるもの」と「与えられている条件」を整理してみましょう。何を求めればよいか分かりますか？' },
+];
+
+const DEFAULT_RESPONSE = 'いい質問ですね！<br>もう少し詳しく教えてもらえますか？<br>どの問題で、どこまで考えましたか？一緒に整理しながら考えましょう。';
+
+function getDemoResponse(message) {
+  const msg = message.replace(/<[^>]*>/g, '');
+  for (const pattern of DEMO_RESPONSES) {
+    if (pattern.keywords.some(kw => msg.includes(kw))) {
+      return pattern.reply;
+    }
+  }
+  return DEFAULT_RESPONSE;
+}
+
+// ─────────────────────────────────────────
+// 状態変数
+// ─────────────────────────────────────────
+let currentUserName = "";
+let currentDisplayName = "";
+window.isMuted = true;
+window.audioUnlocked = false;
+window.allBotMessages = [];
+window.finalTranscript = "";
+let pendingFileData = null;
+
+const IMAGE_MAX_SIZE = 1000;
+const IMAGE_JPEG_QUALITY = 0.8;
+
+// ─────────────────────────────────────────
+// アバター操作
+// ─────────────────────────────────────────
+function showBotThinking() {
+  const el = document.getElementById('botAvatar');
+  if (el) el.src = BOT_IMAGE_THINKING;
+}
+function showBotTalking() {
+  const el = document.getElementById('botAvatar');
+  if (el) el.src = BOT_IMAGE_TALKING;
+}
+function showBotIdle() {
+  const el = document.getElementById('botAvatar');
+  if (el) el.src = BOT_IMAGE_IDLE;
+}
+
+// ─────────────────────────────────────────
+// バブル描画
+// ─────────────────────────────────────────
+function appendBubble(sender, message) {
+  const container = document.getElementById('chatContainer');
+  const bubble = document.createElement('div');
+  bubble.classList.add('bubble');
+  if (sender === 'user') {
+    bubble.classList.add('user-bubble');
+  } else {
+    bubble.classList.add('bot-bubble');
+    window.allBotMessages.push(message);
+  }
+  bubble.innerHTML = message;
+  container.appendChild(bubble);
+  container.scrollTop = container.scrollHeight;
+}
+
+function appendTypingIndicator() {
+  const container = document.getElementById('chatContainer');
+  const el = document.createElement('div');
+  el.classList.add('bubble', 'typing-bubble');
+  el.id = 'typingIndicator';
+  el.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+  return el;
+}
+function removeTypingIndicator() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+// ─────────────────────────────────────────
+// 音声読み上げ（Web Speech API）
+// ─────────────────────────────────────────
+function speakText(fullText) {
+  if (window.isMuted || !window.audioUnlocked) return;
+  if (!window.speechSynthesis) return;
+  const text = fullText.replace(/<[^>]*>/g, ' ');
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ja-JP';
+  utter.rate = 1.0;
+  utter.onstart = () => showBotTalking();
+  utter.onend   = () => showBotIdle();
+  utter.onerror = () => showBotIdle();
+  window.speechSynthesis.speak(utter);
+}
+
+function stopAllSpeech() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  showBotIdle();
+}
+
+function readLatestMessage() {
+  if (window.allBotMessages.length === 0) return;
+  speakText(window.allBotMessages[window.allBotMessages.length - 1]);
+}
+
+// ─────────────────────────────────────────
+// 画像リサイズ
+// ─────────────────────────────────────────
+function resizeImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const img = new Image();
+      img.onload = function() {
+        let w = img.width, h = img.height;
+        if (w > IMAGE_MAX_SIZE || h > IMAGE_MAX_SIZE) {
+          if (w > h) { h = Math.round(h * (IMAGE_MAX_SIZE / w)); w = IMAGE_MAX_SIZE; }
+          else       { w = Math.round(w * (IMAGE_MAX_SIZE / h)); h = IMAGE_MAX_SIZE; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', IMAGE_JPEG_QUALITY));
+      };
+      img.onerror = () => reject(new Error('画像読み込み失敗'));
+      img.src = event.target.result;
+    };
+    reader.onerror = () => reject(new Error('ファイル読み込み失敗'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleImageSelect(file) {
+  if (!file) return;
+  try {
+    const resizedDataUrl = await resizeImageFile(file);
+    pendingFileData = {
+      base64Data: resizedDataUrl.split(',')[1],
+      fileName: file.name,
+      previewUrl: resizedDataUrl
+    };
+    document.getElementById('previewImage').src = pendingFileData.previewUrl;
+    document.getElementById('previewFileName').textContent = file.name;
+    document.getElementById('imagePreviewArea').style.display = 'flex';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('cameraInput').value = '';
+  } catch (err) {
+    alert('画像の処理に失敗しました。別の画像でお試しください。');
+  }
+}
+
+// ─────────────────────────────────────────
+// 音声入力
+// ─────────────────────────────────────────
+function startVoiceInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('このブラウザは音声入力に対応していません。');
+    return;
+  }
+  if (window.currentRecognition) {
+    window.currentRecognition.stop();
+    window.currentRecognition = null;
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      stream.getTracks().forEach(t => t.stop());
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ja-JP';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      window.currentRecognition = recognition;
+      const micBtn = document.getElementById('micBtn');
+      micBtn.style.backgroundColor = '#ff6868';
+      recognition.onresult = function(event) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) window.finalTranscript += event.results[i][0].transcript;
+        }
+        document.getElementById('userInput').value = window.finalTranscript;
+      };
+      recognition.onerror = e => console.error('音声認識エラー:', e.error);
+      recognition.onend = function() {
+        micBtn.style.backgroundColor = '#00c300';
+        window.currentRecognition = null;
+      };
+      recognition.start();
+    })
+    .catch(() => alert('マイクの使用が許可されていません。ブラウザの設定でマイクを許可してください。'));
+}
+
+// ─────────────────────────────────────────
+// メッセージ送信（デモ用AIシミュレーション）
+// ─────────────────────────────────────────
+function sendMessage() {
+  const inputField = document.getElementById('userInput');
+  const message = inputField.value.trim();
+  if (!message && !pendingFileData) return;
+
+  window.audioUnlocked = true;
+  stopAllSpeech();
+  showBotThinking();
+
+  if (pendingFileData) {
+    // 画像送信
+    const localImgHtml = `<img src="${pendingFileData.previewUrl}" style="max-width:200px;border-radius:8px;">` + (message ? `<br>${message}` : '');
+    appendBubble('user', localImgHtml);
+    pendingFileData = null;
+    document.getElementById('imagePreviewArea').style.display = 'none';
+    document.getElementById('previewImage').src = '';
+    document.getElementById('previewFileName').textContent = '選択されていません';
+    inputField.value = '';
+    window.finalTranscript = '';
+
+    const typing = appendTypingIndicator();
+    setTimeout(() => {
+      removeTypingIndicator();
+      showBotIdle();
+      const reply = getDemoResponse('画像');
+      appendBubble('bot', reply);
+      speakText(reply);
+    }, 1800);
+
+  } else {
+    // テキスト送信
+    appendBubble('user', message);
+    inputField.value = '';
+    window.finalTranscript = '';
+
+    const typing = appendTypingIndicator();
+    const delay = 1200 + Math.random() * 800;
+    setTimeout(() => {
+      removeTypingIndicator();
+      showBotIdle();
+      const reply = getDemoResponse(message);
+      appendBubble('bot', reply);
+      speakText(reply);
+    }, delay);
+  }
+}
+
+// ─────────────────────────────────────────
+// チャット初期化
+// ─────────────────────────────────────────
+function resetChat() {
+  stopAllSpeech();
+  showBotIdle();
+  const container = document.getElementById('chatContainer');
+  container.innerHTML = '';
+  window.allBotMessages = [];
+  appendBubble('bot', INITIAL_MESSAGE);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ─────────────────────────────────────────
+// トースト表示
+// ─────────────────────────────────────────
+function showToast(msg) {
+  const toast = document.getElementById('helpToast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+// ─────────────────────────────────────────
+// イベント登録
+// ─────────────────────────────────────────
+window.addEventListener('load', () => {
+
+  // アバター初期設定
+  document.getElementById('botAvatar').src = BOT_IMAGE_IDLE;
+
+  // ログイン
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const pw = document.getElementById('password').value.trim();
+    const user = DEMO_USERS[pw];
+    if (user) {
+      currentUserName = user.userName;
+      currentDisplayName = user.displayName;
+      document.getElementById('userNameDisplay').textContent = user.displayName;
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('chatView').style.display = 'flex';
+      // 履歴を表示してから初期メッセージ
+      DEMO_HISTORY.forEach(item => {
+        if (item.userHtml) appendBubble('user', item.userHtml);
+        if (item.botHtml)  appendBubble('bot',  item.botHtml);
+      });
+      const container = document.getElementById('chatContainer');
+      container.scrollTop = container.scrollHeight;
+    } else {
+      document.getElementById('loginError').textContent = 'パスワードが違います';
+    }
+  });
+
+  // 送信
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('userInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // マイク
+  document.getElementById('micBtn').addEventListener('click', startVoiceInput);
+
+  // ミュート
+  document.getElementById('muteBtn').addEventListener('click', function() {
+    window.isMuted = !window.isMuted;
+    const icon = document.getElementById('muteIcon');
+    if (window.isMuted) {
+      icon.className = 'fas fa-volume-xmark';
+      stopAllSpeech();
+    } else {
+      icon.className = 'fas fa-volume-up';
+      window.audioUnlocked = true;
+      readLatestMessage();
+    }
+  });
+
+  // リピート
+  document.getElementById('replayBtn').addEventListener('click', function() {
+    if (!window.isMuted) {
+      stopAllSpeech();
+      window.audioUnlocked = true;
+      readLatestMessage();
+    }
+  });
+
+  // 困りボタン
+  const helpBtn    = document.getElementById('helpBtn');
+  const cancelBtn  = document.getElementById('cancelBtn');
+  const helpStatus = document.getElementById('helpStatus');
+  helpBtn.addEventListener('click', () => {
+    helpBtn.style.display    = 'none';
+    helpStatus.style.display = 'inline-block';
+    cancelBtn.style.display  = 'inline-block';
+    showToast('📢 先生に「困り中」フラグを送りました！（デモ）');
+  });
+  cancelBtn.addEventListener('click', () => {
+    helpBtn.style.display    = 'inline-block';
+    helpStatus.style.display = 'none';
+    cancelBtn.style.display  = 'none';
+    showToast('✅ 「困り中」を解除しました（デモ）');
+  });
+
+  // 初期化モーダル
+  document.getElementById('resetChatBtn').addEventListener('click', () => {
+    document.getElementById('resetModalBackdrop').style.display = 'flex';
+  });
+  document.getElementById('resetYesBtn').addEventListener('click', () => {
+    document.getElementById('resetModalBackdrop').style.display = 'none';
+    resetChat();
+  });
+  document.getElementById('resetNoBtn').addEventListener('click', () => {
+    document.getElementById('resetModalBackdrop').style.display = 'none';
+  });
+  document.getElementById('resetModalBackdrop').addEventListener('click', e => {
+    if (e.target === document.getElementById('resetModalBackdrop'))
+      document.getElementById('resetModalBackdrop').style.display = 'none';
+  });
+
+  // 画像添付ボタン
+  document.getElementById('uploadBtn').addEventListener('click', () => {
+    document.getElementById('imageSourceModalBackdrop').style.display = 'flex';
+  });
+  document.getElementById('closeSourceModalBtn').addEventListener('click', () => {
+    document.getElementById('imageSourceModalBackdrop').style.display = 'none';
+  });
+  document.getElementById('chooseCameraBtn').addEventListener('click', () => {
+    document.getElementById('imageSourceModalBackdrop').style.display = 'none';
+    document.getElementById('cameraInput').click();
+  });
+  document.getElementById('chooseFileBtn').addEventListener('click', () => {
+    document.getElementById('imageSourceModalBackdrop').style.display = 'none';
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('fileInput').addEventListener('change', e => handleImageSelect(e.target.files[0]));
+  document.getElementById('cameraInput').addEventListener('change', e => handleImageSelect(e.target.files[0]));
+  document.getElementById('cancelUploadBtn').addEventListener('click', () => {
+    pendingFileData = null;
+    document.getElementById('imagePreviewArea').style.display = 'none';
+    document.getElementById('previewImage').src = '';
+    document.getElementById('previewFileName').textContent = '選択されていません';
+  });
+});
+</script>
+
+</body>
+</html>
